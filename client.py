@@ -1,29 +1,38 @@
 import socket
 import sys
+import psutil
 
+list_ports = []
 s = socket.socket()
 
-print "You currently have 2 seeds. Which one you want to access?"
-print "\n 1 : 12121 \n 2 : 12122"
-choice = int(raw_input("Enter your choice (1/2) : "))
-if choice == 1:
-    port = 12121
-    try:
-        s.connect(('127.0.0.1',port))
-    except Exception as err:
-        print "12121 is not available, pivoting to 12122 ..."
-        port = 12122
-        s.connect(('127.0.0.1',port))
-else:
-    port = 12122
-    try:
-        s.connect(('127.0.0.1',port))
-    except Exception as err:
-        print "12122 is not available, pivoting to 12121 ..."
-        port = 12121
-        s.connect(('127.0.0.1',port))
+pids = psutil.pids()
+for p in pids:
+    a = psutil.Process(p)
+    if(a.name() == "python"):
+        if len(a.connections()) == 0:
+            pass
+        else:
+            list_ports.append(a.connections()[0][3][1])
+
+print "You currently have " + str(len(list_ports)) + " seed(s). Which one you want to access?"
+for x in range(0,len(list_ports)):
+    print str(x+1) + " : " + str(list_ports[x])
+choice = int(raw_input("Enter your choice (S.No) : "))
+if choice > len(list_ports):
+    print "Can't connect to server."
+    sys.exit()
+
+port = list_ports[choice-1]
+try:
+    s.connect(('127.0.0.1',port))
+except Exception as err:
+    print "Port unavailable, pivoting to another port ..."
+    list_ports.remove(port)
+    port = list_ports[0]
+    s.connect(('127.0.0.1',port))
 
 f = open("data3.txt","w")
 f.write(s.recv(1024))
+print "You got your data!"
 f.close()
 s.close()
