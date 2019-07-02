@@ -3,6 +3,7 @@ import sys
 import psutil
 
 list_ports = []
+count = 0
 s = socket.socket()
 
 pids = psutil.pids()
@@ -28,11 +29,20 @@ try:
 except Exception as err:
     print "Port unavailable, pivoting to another port ..."
     list_ports.remove(port)
-    port = list_ports[0]
-    s.connect(('127.0.0.1',port))
+    for x in range(0,len(list_ports)):
+        port = list_ports[x]
+        try:
+            s.connect(('127.0.0.1',port))
+            count += 1
+            break
+        except Exception as err:
+            pass
 
-f = open("data3.txt","w")
-f.write(s.recv(1024))
-print "You got your data!"
-f.close()
-s.close()
+if count == 1:
+    f = open("data3.txt","w")
+    f.write(s.recv(1024))
+    print "You got your data!"
+    f.close()
+    s.close()
+else:
+    print "No active server available"
